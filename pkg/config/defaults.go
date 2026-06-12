@@ -94,6 +94,12 @@ func DefaultConfig() *Config {
 
 			// DeepSeek - https://platform.deepseek.com/
 			{
+				ModelName: "deepseek-v4-flash",
+				Provider:  "deepseek",
+				Model:     "deepseek-v4-flash",
+				APIBase:   "https://api.deepseek.com/v1",
+			},
+			{
 				ModelName: "deepseek-chat",
 				Provider:  "deepseek",
 				Model:     "deepseek-chat",
