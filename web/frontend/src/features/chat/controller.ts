@@ -12,6 +12,7 @@ import {
   readStoredSessionId,
 } from "@/features/chat/state"
 import { invalidateSocket, isCurrentSocket } from "@/features/chat/websocket"
+import { getWsBaseUrl } from "@/lib/base-path"
 import i18n from "@/i18n"
 import {
   type ChatAttachment,
@@ -137,8 +138,7 @@ export async function connectChat() {
       return
     }
 
-    const wsScheme = window.location.protocol === "https:" ? "wss:" : "ws:"
-    const wsUrl = `${wsScheme}//${window.location.host}/pico/ws`
+    const wsUrl = `${getWsBaseUrl()}pico/ws`
     const url = `${wsUrl}?session_id=${encodeURIComponent(sessionId)}`
     const socket = new WebSocket(url)
 

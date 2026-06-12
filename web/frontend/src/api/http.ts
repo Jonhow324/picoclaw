@@ -1,3 +1,4 @@
+import { withBase } from "@/lib/base-path"
 import { isLauncherAuthPathname } from "@/lib/launcher-login-path"
 
 function isLauncherAuthPath(): boolean {
@@ -35,7 +36,7 @@ export async function launcherFetch(
       typeof globalThis.location !== "undefined" &&
       !isLauncherAuthPath()
     ) {
-      globalThis.location.assign("/launcher-login")
+      globalThis.location.assign(withBase("/launcher-login"))
     }
   }
   return res

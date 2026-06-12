@@ -2,6 +2,7 @@
  * Dashboard launcher auth API.
  * Uses plain fetch (not launcherFetch) to avoid redirect loops on auth pages.
  */
+import { withBase } from "@/lib/base-path"
 export type LoginResult =
   | { ok: true }
   | { ok: false; status: number; error: string }
@@ -9,7 +10,7 @@ export type LoginResult =
 export async function postLauncherDashboardLogin(
   password: string,
 ): Promise<LoginResult> {
-  const res = await fetch("/api/auth/login", {
+  const res = await fetch(withBase("/api/auth/login"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
@@ -31,7 +32,7 @@ export type LauncherAuthStatus = {
 }
 
 export async function getLauncherAuthStatus(): Promise<LauncherAuthStatus> {
-  const res = await fetch("/api/auth/status", {
+  const res = await fetch(withBase("/api/auth/status"), {
     method: "GET",
     credentials: "same-origin",
   })
@@ -42,7 +43,7 @@ export async function getLauncherAuthStatus(): Promise<LauncherAuthStatus> {
 }
 
 export async function postLauncherDashboardLogout(): Promise<boolean> {
-  const res = await fetch("/api/auth/logout", {
+  const res = await fetch(withBase("/api/auth/logout"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
@@ -57,7 +58,7 @@ export async function postLauncherDashboardSetup(
   password: string,
   confirm: string,
 ): Promise<SetupResult> {
-  const res = await fetch("/api/auth/setup", {
+  const res = await fetch(withBase("/api/auth/setup"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "same-origin",

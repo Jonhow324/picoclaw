@@ -7,6 +7,7 @@ import {
   getLauncherAuthStatus,
   postLauncherDashboardLogin,
 } from "@/api/launcher-auth"
+import { withBase } from "@/lib/base-path"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -37,7 +38,7 @@ function LauncherLoginPage() {
     void getLauncherAuthStatus()
       .then((s) => {
         if (!s.initialized) {
-          globalThis.location.assign("/launcher-setup")
+          globalThis.location.assign(withBase("/launcher-setup"))
         }
       })
       .catch(() => {
@@ -52,11 +53,11 @@ function LauncherLoginPage() {
       try {
         const result = await postLauncherDashboardLogin(passwordValue)
         if (result.ok) {
-          globalThis.location.assign("/")
+          globalThis.location.assign(withBase("/"))
           return
         }
         if (result.status === 409) {
-          globalThis.location.assign("/launcher-setup")
+          globalThis.location.assign(withBase("/launcher-setup"))
           return
         }
         if (result.status === 401) {

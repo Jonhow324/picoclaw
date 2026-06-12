@@ -1,3 +1,4 @@
+import { withBase } from "@/lib/base-path"
 import { launcherFetch } from "@/api/http"
 
 export interface SkillSupportItem {
@@ -62,7 +63,7 @@ export interface InstallSkillResponse {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await launcherFetch(path, options)
+  const res = await launcherFetch(withBase(path), options)
   if (!res.ok) {
     throw new Error(await extractErrorMessage(res))
   }
@@ -104,7 +105,7 @@ export async function importSkill(file: File): Promise<SkillActionResponse> {
   const formData = new FormData()
   formData.set("file", file)
 
-  const res = await launcherFetch("/api/skills/import", {
+  const res = await launcherFetch(withBase("/api/skills/import"), {
     method: "POST",
     body: formData,
   })

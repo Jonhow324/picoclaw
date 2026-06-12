@@ -4,6 +4,7 @@ import { StrictMode } from "react"
 import ReactDOM from "react-dom/client"
 
 import { AppProviders } from "./app-providers"
+import { BASE_PATH } from "./lib/base-path"
 import "./i18n"
 import "./index.css"
 import { routeTree } from "./routeTree.gen"
@@ -15,6 +16,7 @@ const router = createRouter({
   context: {
     queryClient,
   },
+  basepath: BASE_PATH,
 })
 
 declare module "@tanstack/react-router" {

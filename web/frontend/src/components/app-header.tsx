@@ -15,6 +15,7 @@ import * as React from "react"
 import { useTranslation } from "react-i18next"
 
 import { postLauncherDashboardLogout } from "@/api/launcher-auth"
+import { withBase } from "@/lib/base-path"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,7 +74,7 @@ export function AppHeader() {
 
   const handleLogout = async () => {
     await postLauncherDashboardLogout()
-    globalThis.location.assign("/launcher-login")
+    globalThis.location.assign(withBase("/launcher-login"))
   }
 
   const handleGatewayToggle = () => {
@@ -105,7 +106,7 @@ export function AppHeader() {
         </SidebarTrigger>
         <div className="hidden w-36 shrink-0 items-center sm:flex">
           <Link to="/">
-            <img className="w-full" src="/logo_with_text.png" alt="Logo" />
+            <img className="w-full" src={withBase("/logo_with_text.png")} alt="Logo" />
           </Link>
         </div>
       </div>

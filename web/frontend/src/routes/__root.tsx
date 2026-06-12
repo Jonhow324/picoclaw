@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { getLauncherAuthStatus } from "@/api/launcher-auth"
 import { AppLayout } from "@/components/app-layout"
 import { initializeChatStore } from "@/features/chat/controller"
+import { withBase } from "@/lib/base-path"
 import { isLauncherAuthPathname } from "@/lib/launcher-login-path"
 
 const RootLayout = () => {
@@ -38,9 +39,9 @@ const RootLayout = () => {
     void getLauncherAuthStatus()
       .then((s) => {
         if (!s.initialized) {
-          globalThis.location.assign("/launcher-setup")
+          globalThis.location.assign(withBase("/launcher-setup"))
         } else if (!s.authenticated) {
-          globalThis.location.assign("/launcher-login")
+          globalThis.location.assign(withBase("/launcher-login"))
         }
       })
       .catch((err: unknown) => {
@@ -49,7 +50,7 @@ const RootLayout = () => {
         // do NOT redirect: a subsequent successful login would loop straight back here.
         // launcherFetch handles 401 on real API calls regardless.
         if (err instanceof Error && /^status 40[13]$/.test(err.message)) {
-          globalThis.location.assign("/launcher-login")
+          globalThis.location.assign(withBase("/launcher-login"))
         } else {
           setAuthError(
             err instanceof Error

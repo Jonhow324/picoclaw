@@ -12,6 +12,8 @@ COPY web/frontend/package.json web/frontend/pnpm-lock.yaml ./
 RUN CI=true pnpm install --frozen-lockfile
 
 # Build frontend
+ARG VITE_BASE_URL="/"
+ENV VITE_BASE_URL=$VITE_BASE_URL
 COPY web/frontend/ ./
 RUN pnpm build:backend
 

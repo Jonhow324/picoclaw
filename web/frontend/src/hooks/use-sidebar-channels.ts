@@ -18,6 +18,7 @@ import type { TFunction } from "i18next"
 import { useAtomValue } from "jotai"
 import * as React from "react"
 
+import { withBase } from "@/lib/base-path"
 import {
   type AppConfig,
   type SupportedChannel,
@@ -57,8 +58,8 @@ function IconLark({ className }: { className?: string }) {
     style: {
       display: "inline-block",
       backgroundColor: "currentColor",
-      mask: "url(/lark.svg) center / contain no-repeat",
-      WebkitMask: "url(/lark.svg) center / contain no-repeat",
+      mask: `url(${withBase("/lark.svg")}) center / contain no-repeat`,
+      WebkitMask: `url(${withBase("/lark.svg")}) center / contain no-repeat`,
     } as React.CSSProperties,
   })
 }

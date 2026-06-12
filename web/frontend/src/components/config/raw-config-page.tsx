@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { launcherFetch } from "@/api/http"
+import { withBase } from "@/lib/base-path"
 import { ConfigChangeNotice } from "@/components/config-change-notice"
 import { PageHeader } from "@/components/page-header"
 import {
@@ -31,7 +32,7 @@ export function RawConfigPage() {
   const { data: config, isLoading } = useQuery({
     queryKey: ["config"],
     queryFn: async () => {
-      const res = await launcherFetch("/api/config")
+      const res = await launcherFetch(withBase("/api/config"))
       if (!res.ok) {
         throw new Error("Failed to fetch config")
       }
@@ -41,7 +42,7 @@ export function RawConfigPage() {
 
   const mutation = useMutation({
     mutationFn: async (newConfig: string) => {
-      const res = await launcherFetch("/api/config", {
+      const res = await launcherFetch(withBase("/api/config"), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: newConfig,

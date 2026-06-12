@@ -1,3 +1,4 @@
+import { withBase } from "@/lib/base-path"
 import { launcherFetch } from "@/api/http"
 import { refreshGatewayState } from "@/store/gateway"
 
@@ -65,10 +66,8 @@ interface ModelActionResponse {
   default_model?: string
 }
 
-const BASE_URL = ""
-
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await launcherFetch(`${BASE_URL}${path}`, options)
+  const res = await launcherFetch(withBase(path), options)
   if (!res.ok) {
     let detail = ""
     try {

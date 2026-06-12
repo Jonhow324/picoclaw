@@ -1,3 +1,4 @@
+import { withBase } from "@/lib/base-path"
 import { launcherFetch } from "@/api/http"
 
 // API client for gateway process management.
@@ -26,10 +27,8 @@ interface GatewayActionResponse {
   log_run_id?: number
 }
 
-const BASE_URL = ""
-
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await launcherFetch(`${BASE_URL}${path}`, options)
+  const res = await launcherFetch(withBase(path), options)
   if (!res.ok) {
     throw new Error(`API error: ${res.status} ${res.statusText}`)
   }

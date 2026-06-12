@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { patchAppConfig, resetAppConfig } from "@/api/channels"
 import { launcherFetch } from "@/api/http"
+import { withBase } from "@/lib/base-path"
 import { postLauncherDashboardSetup } from "@/api/launcher-auth"
 import {
   getAutoStartStatus,
@@ -119,7 +120,7 @@ export function ConfigPage() {
       const controller = new AbortController()
       const timer = setTimeout(() => controller.abort(), 5000)
       try {
-        const res = await launcherFetch("/api/config", {
+        const res = await launcherFetch(withBase("/api/config"), {
           signal: controller.signal,
         })
         if (!res.ok) {
@@ -274,7 +275,7 @@ export function ConfigPage() {
   const handleFactoryReset = async () => {
     try {
       await resetAppConfig()
-      const fresh = await launcherFetch("/api/config").then((r) => r.json())
+      const fresh = await launcherFetch(withBase("/api/config")).then((r) => r.json())
       const parsed = buildFormFromConfig(fresh)
       setForm(parsed)
       setBaseline(parsed)

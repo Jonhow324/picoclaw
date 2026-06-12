@@ -4,6 +4,7 @@ import * as React from "react"
 import { useTranslation } from "react-i18next"
 
 import { postLauncherDashboardSetup } from "@/api/launcher-auth"
+import { withBase } from "@/lib/base-path"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -41,7 +42,7 @@ function LauncherSetupPage() {
     try {
       const result = await postLauncherDashboardSetup(password, confirm)
       if (result.ok) {
-        globalThis.location.assign("/launcher-login")
+        globalThis.location.assign(withBase("/launcher-login"))
         return
       }
       setError(result.error)
