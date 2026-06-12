@@ -152,7 +152,8 @@ scp docker/images/picoclaw-launcher-v1.0.0-arm64.tar.gz user@your_arm_device_ip:
 必须通过配置了 `proxy_redirect` 的 Nginx 进行访问：
 
 ### 5.1 部署运行容器（在 ARM 目标设备）
-传输镜像压缩包到 ARM 设备上并用 Docker 载入运行：
+传输镜像压缩包到 ARM 设备上并用 Docker 载入运行。为了让后端在不需要修改 Nginx 统一模板的情况下自动处理重定向，您可以通过传递环境变量 `PICOCLAW_BASE_PATH` 来告知后端子路径前缀：
+
 ```bash
 # 1. 导入镜像
 docker load < picoclaw-launcher-v1.0.0-arm64.tar.gz
@@ -160,16 +161,17 @@ docker load < picoclaw-launcher-v1.0.0-arm64.tar.gz
 # 2. 强力删除同名冲突容器
 docker rm -f picoclaw-launcher-arm64
 
-# 3. 启动运行新容器
+# 3. 启动运行新容器（通过 -e 传递子路径前缀）
 docker run -d \
   --name picoclaw-launcher-arm64 \
   -p 18800:18800 \
+  -e PICOCLAW_BASE_PATH=/picoclaw/ \
   -v ~/.picoclaw:/root/.picoclaw \
   myregistry.com/picoclaw-launcher:v1.0.0-arm64
 ```
 
 ### 5.2 Nginx 反向代理配置
-在目标设备 Nginx 配置文件中加入代理段，**确保引入 `proxy_redirect` 改写 HTTP 重定向头部**：
+由于已经通过环境变量 `PICOCLAW_BASE_PATH` 告诉了后端子路径前缀，Nginx **不需要**配置任何特殊的重定向处理头（如 `proxy_redirect` 或 `proxy_set_header X-Forwarded-Prefix`），直接使用您统一写入的常规反向代理模板即可：
 
 ```nginx
 server {
@@ -179,9 +181,6 @@ server {
     location /picoclaw/ {
         # 注意末尾的 "/" 非常关键，用于自动 strip 掉 "/picoclaw" 前缀并重写请求
         proxy_pass http://127.0.0.1:18800/; 
-        
-        # ⚠️ 核心配置：将后端 302 跳转 Location: / 自动补全为 /picoclaw/
-        proxy_redirect / /picoclaw/;
 
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -200,3 +199,4 @@ server {
 ```
 
 配置重载后，在浏览器访问 `http://<设备IP>/picoclaw/` 即可完美加载并运行您的 PicoClaw！
+

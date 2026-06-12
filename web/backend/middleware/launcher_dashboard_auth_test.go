@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 )
@@ -263,3 +264,78 @@ func TestLauncherDashboardAuth_WebSocketUnauthorizedDoesNotRedirect(t *testing.T
 		t.Fatalf("Location = %q, want empty", got)
 	}
 }
+
+func TestLauncherDashboardAuth_RedirectWithXForwardedPrefix(t *testing.T) {
+	cfg := LauncherDashboardAuthConfig{ExpectedCookie: "deadbeef"}
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		t.Fatal("next handler should not run without session cookie")
+	})
+	h := LauncherDashboardAuth(cfg, next)
+
+	for _, tc := range []struct {
+		prefix string
+		want   string
+	}{
+		{"", "/launcher-login"},
+		{"/picoclaw", "/picoclaw/launcher-login"},
+		{"/picoclaw/", "/picoclaw/launcher-login"},
+		{"picoclaw", "/picoclaw/launcher-login"},
+		{"/", "/launcher-login"},
+	} {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/?token=secret", nil)
+		if tc.prefix != "" {
+			req.Header.Set("X-Forwarded-Prefix", tc.prefix)
+		}
+		h.ServeHTTP(rec, req)
+		if rec.Code != http.StatusFound {
+			t.Fatalf("prefix %q: code = %d, want %d", tc.prefix, rec.Code, http.StatusFound)
+		}
+		if got := rec.Header().Get("Location"); got != tc.want {
+			t.Fatalf("prefix %q: Location = %q, want %q", tc.prefix, got, tc.want)
+		}
+	}
+}
+
+func TestLauncherDashboardAuth_RedirectWithEnvVar(t *testing.T) {
+	cfg := LauncherDashboardAuthConfig{ExpectedCookie: "deadbeef"}
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		t.Fatal("next handler should not run without session cookie")
+	})
+	h := LauncherDashboardAuth(cfg, next)
+
+	// Test PICOCLAW_BASE_PATH
+	os.Setenv("PICOCLAW_BASE_PATH", "/pico-env")
+	defer os.Unsetenv("PICOCLAW_BASE_PATH")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/?token=secret", nil)
+	h.ServeHTTP(rec, req)
+	if got := rec.Header().Get("Location"); got != "/pico-env/launcher-login" {
+		t.Fatalf("PICOCLAW_BASE_PATH env redirect Location = %q, want %q", got, "/pico-env/launcher-login")
+	}
+
+	// Test BASE_PATH fallback
+	os.Unsetenv("PICOCLAW_BASE_PATH")
+	os.Setenv("BASE_PATH", "/base-env")
+	defer os.Unsetenv("BASE_PATH")
+
+	rec2 := httptest.NewRecorder()
+	req2 := httptest.NewRequest(http.MethodGet, "/?token=secret", nil)
+	h.ServeHTTP(rec2, req2)
+	if got := rec2.Header().Get("Location"); got != "/base-env/launcher-login" {
+		t.Fatalf("BASE_PATH env redirect Location = %q, want %q", got, "/base-env/launcher-login")
+	}
+
+	// Test X-Forwarded-Prefix priority over env vars
+	os.Setenv("PICOCLAW_BASE_PATH", "/pico-env")
+	rec3 := httptest.NewRecorder()
+	req3 := httptest.NewRequest(http.MethodGet, "/?token=secret", nil)
+	req3.Header.Set("X-Forwarded-Prefix", "/header-prefix")
+	h.ServeHTTP(rec3, req3)
+	if got := rec3.Header().Get("Location"); got != "/header-prefix/launcher-login" {
+		t.Fatalf("X-Forwarded-Prefix header should override env vars: Location = %q, want %q", got, "/header-prefix/launcher-login")
+	}
+}
+
+

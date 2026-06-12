@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 	"sync"
@@ -155,7 +156,7 @@ func LauncherDashboardAuth(cfg LauncherDashboardAuthConfig, next http.Handler) h
 
 func handleLauncherLocalAutoLogin(w http.ResponseWriter, r *http.Request, cfg LauncherDashboardAuthConfig) {
 	if validLauncherDashboardAuth(r, cfg) {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		redirectWithPrefix(w, r, "/", http.StatusSeeOther)
 		return
 	}
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
@@ -169,7 +170,7 @@ func handleLauncherLocalAutoLogin(w http.ResponseWriter, r *http.Request, cfg La
 	}
 	if cfg.LocalAutoLogin != nil && cfg.LocalAutoLogin.consume(r.URL.Query().Get("nonce")) {
 		SetLauncherDashboardSessionCookie(w, r, cfg.ExpectedCookie, cfg.SecureCookie)
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		redirectWithPrefix(w, r, "/", http.StatusSeeOther)
 		return
 	}
 	rejectLauncherDashboardAuth(w, r, LauncherDashboardLocalAutoLoginPath)
@@ -307,5 +308,23 @@ func rejectLauncherDashboardAuth(w http.ResponseWriter, r *http.Request, canonic
 		_, _ = w.Write([]byte(`{"error":"unauthorized"}`))
 		return
 	}
-	http.Redirect(w, r, "/launcher-login", http.StatusFound)
+	redirectWithPrefix(w, r, "/launcher-login", http.StatusFound)
+}
+
+func redirectWithPrefix(w http.ResponseWriter, r *http.Request, target string, code int) {
+	prefix := r.Header.Get("X-Forwarded-Prefix")
+	if prefix == "" {
+		prefix = os.Getenv("PICOCLAW_BASE_PATH")
+	}
+	if prefix == "" {
+		prefix = os.Getenv("BASE_PATH")
+	}
+
+	if prefix != "" {
+		prefix = "/" + strings.Trim(prefix, "/")
+		if prefix != "/" {
+			target = prefix + target
+		}
+	}
+	http.Redirect(w, r, target, code)
 }
