@@ -80,3 +80,6 @@ AGENTS.zh.md
 .codegraph
 .sisyphus
 .omo
+
+# Docker Images
+docker/images/

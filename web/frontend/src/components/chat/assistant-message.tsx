@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button"
 import { formatMessageTime } from "@/hooks/use-pico-chat"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { cn } from "@/lib/utils"
+import { withBase } from "@/lib/base-path"
 import {
   type AssistantMessageKind,
   type ChatAttachment,
@@ -254,13 +255,13 @@ export function AssistantMessage({
           {imageAttachments.map((attachment, index) => (
             <a
               key={`${attachment.url}-${index}`}
-              href={attachment.url}
+              href={withBase(attachment.url)}
               target="_blank"
               rel="noreferrer"
               className="group/img border-border/50 bg-muted/30 hover:border-border/80 relative overflow-hidden rounded-xl border shadow-sm transition-colors"
             >
               <img
-                src={attachment.url}
+                src={withBase(attachment.url)}
                 alt={attachment.filename || "Attached image"}
                 className="max-h-80 max-w-[280px] object-contain transition-transform duration-300 group-hover/img:scale-[1.02]"
               />
@@ -275,7 +276,7 @@ export function AssistantMessage({
           {fileAttachments.map((attachment, index) => (
             <a
               key={`${attachment.url}-${index}`}
-              href={attachment.url}
+              href={withBase(attachment.url)}
               download={attachment.filename}
               className="group/file border-border/60 bg-card flex w-fit max-w-sm min-w-[220px] items-center gap-3.5 rounded-xl border px-4 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-500/30 hover:shadow-sm dark:hover:border-violet-500/40"
             >

@@ -9,6 +9,10 @@
 2. [前端代码子路径重构](#2-前端代码子路径重构)
 3. [一键式自动化构建助手 (`build.sh`)](#3-一键式自动化构建助手-buildsh)
 4. [Docker / Podman 跨架构零模拟编译打包](#4-docker--podman-跨架构零模拟编译打包)
+    - [4.1 新建发布版打包配置](#41-新建发布版打包配置)
+    - [4.2 本地跨平台封包工作流](#42-本地跨平台封包工作流)
+    - [4.3 镜像的版本控制与发布规范 (Tag 最佳实践)](#43-镜像的版本控制与发布规范-tag-最佳实践)
+    - [4.4 镜像的物理分发与传送](#44-镜像的物理分发与传送)
 5. [目标设备 Docker 运行与 Nginx 反向代理配置](#5-目标设备-docker-运行与-nginx-反向代理配置)
 
 ---
@@ -18,7 +22,7 @@
 为了降低维护成本，本项目采用**“反向代理 Strip 前缀，前端注入 Base”**的协同方案（方案 6.1）：
 - **前端打包时**：注入自定义子路径（如 `VITE_BASE_URL=/picoclaw/`），使所有静态资源引用、接口调用和浏览器路由全部被重置于该命名空间下。
 - **网关转发时**：反向代理（Nginx 或 Caddy）将子路径前缀剥离后转发给 Go 后端。
-- **Go 后端**：保持原样，无需为子路径开发冗余的路由感知逻辑，仅需在网关层处理重定向重写。
+- **Go 后端**：保持原样，无需为子路径开发冗余 of 路由感知逻辑，仅需在网关层处理重定向重写。
 
 ---
 
@@ -91,7 +95,7 @@ export function withBase(path: string): string {
 在您的 `x86_64` 电脑上运行以下组合指令：
 ```bash
 # 1. 在本地交叉编译出 ARM64 的核心二进制和前端静态资源
-./scripts/build.sh -p linux -a arm64 -b /picoclaw/
+./scripts/build.sh -c -p linux -a arm64 -b /picoclaw/
 
 # 2. 建立暂存区（绕过 .dockerignore 对 build/ 目录的限制）
 mkdir -p docker/build_tmp
@@ -105,26 +109,63 @@ podman build --platform linux/arm64 -f docker/Dockerfile.release.arm64 -t picocl
 rm -rf docker/build_tmp
 ```
 
+### 4.3 镜像的版本控制与发布规范 (Tag 最佳实践)
+
+为了长期可维护性与生产环境的安全回滚，强烈建议在本地构建时为每一次打包都打上**具体的版本号（如 v1.0.0）**，并保留**通用的动词 Tag（如 subpath-arm64 或 latest-arm64）**。
+
+在构建时，可以通过多次使用 `-t` 参数，为同一个构建同时打上固定版本标签和测试标签：
+
+#### 方式 A：使用语义化版本 (用于稳定版发布)
+```bash
+podman build --platform linux/arm64 -f docker/Dockerfile.release.arm64 \
+  -t myregistry.com/picoclaw-launcher:v1.0.0-arm64 \
+  -t myregistry.com/picoclaw-launcher:subpath-arm64 .
+```
+
+#### 方式 B：使用 Git Commit ID (用于日常迭代开发)
+将当前的 Git Commit 唯一简写直接作为 Tag 写入，实现镜像与源码历史的精确对齐，极其方便问题排查：
+```bash
+COMMIT_ID=$(git rev-parse --short=8 HEAD)
+
+podman build --platform linux/arm64 -f docker/Dockerfile.release.arm64 \
+  -t myregistry.com/picoclaw-launcher:${COMMIT_ID}-arm64 \
+  -t myregistry.com/picoclaw-launcher:subpath-arm64 .
+```
+
+### 4.4 镜像的物理分发与传送
+打包好的 OCI 容器镜像默认保存在当前开发机的本地 Podman 引擎镜像数据库中。如要转移到目标 ARM 机器，需要在当前电脑上将其导出为物理压缩包（推荐使用带有固定版本号的镜像）：
+
+```bash
+# 1. 将打包好的固定版本镜像导出为物理 tar 压缩包
+podman save myregistry.com/picoclaw-launcher:v1.0.0-arm64 | gzip > docker/images/picoclaw-launcher-v1.0.0-arm64.tar.gz
+
+# 2. 通过网络将压缩包文件传输到目标 ARM 机器
+scp docker/images/picoclaw-launcher-v1.0.0-arm64.tar.gz user@your_arm_device_ip:/home/user/
+```
+
 ---
 
 ## 5. 目标设备 Docker 运行与 Nginx 反向代理配置
 
-由于采用了反向代理剥离前缀的方案，**您不能直接去访问容器映射的 18800 端口**。因为 Go 后端不知道子路径，当它收到请求并拦截到未登录时，会自动发出 `Location: /launcher-login` 的 302 重定向，导致浏览器跳转并脱离子路径命名空间。
+由于采用了反向代理剥离前缀的方案，**您不能直接去访问容器映射 of 18800 端口**。因为 Go 后端不知道子路径，当它收到请求并拦截到未登录时，会自动发出 `Location: /launcher-login` 的 302 重定向，导致浏览器跳转并脱离子路径命名空间。
 
 必须通过配置了 `proxy_redirect` 的 Nginx 进行访问：
 
 ### 5.1 部署运行容器（在 ARM 目标设备）
 传输镜像压缩包到 ARM 设备上并用 Docker 载入运行：
 ```bash
-# 导入镜像
-docker load < picoclaw-launcher-subpath-arm64.tar.gz
+# 1. 导入镜像
+docker load < picoclaw-launcher-v1.0.0-arm64.tar.gz
 
-# 启动运行
+# 2. 强力删除同名冲突容器
+docker rm -f picoclaw-launcher-arm64
+
+# 3. 启动运行新容器
 docker run -d \
   --name picoclaw-launcher-arm64 \
   -p 18800:18800 \
   -v ~/.picoclaw:/root/.picoclaw \
-  localhost/picoclaw-launcher:subpath-arm64
+  myregistry.com/picoclaw-launcher:v1.0.0-arm64
 ```
 
 ### 5.2 Nginx 反向代理配置

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { formatMessageTime } from "@/hooks/use-pico-chat"
 import { cn } from "@/lib/utils"
+import { withBase } from "@/lib/base-path"
 import type { ChatAttachment } from "@/store/chat"
 
 interface UserMessageProps {
@@ -38,7 +39,7 @@ export function UserMessage({
           {imageAttachments.map((attachment, index) => (
             <img
               key={`${attachment.url}-${index}`}
-              src={attachment.url}
+              src={withBase(attachment.url)}
               alt={attachment.filename || t("chat.uploadedImage")}
               className="max-h-72 max-w-full object-cover"
             />

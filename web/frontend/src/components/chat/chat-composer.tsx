@@ -11,6 +11,7 @@ import TextareaAutosize from "react-textarea-autosize"
 import { ContextUsageRing } from "@/components/chat/context-usage-ring"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { withBase } from "@/lib/base-path"
 import type { ChatAttachment, ContextUsage } from "@/store/chat"
 
 export type ChatInputDisabledReason =
@@ -119,7 +120,7 @@ export function ChatComposer({
                   className="bg-background relative h-20 w-20 overflow-hidden rounded-xl border"
                 >
                   <img
-                    src={attachment.url}
+                    src={withBase(attachment.url)}
                     alt={attachment.filename || t("chat.uploadedImage")}
                     className="h-full w-full object-cover"
                   />
