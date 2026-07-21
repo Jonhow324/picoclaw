@@ -100,3 +100,17 @@ The root Makefile uses `CGO_ENABLED=0` and build tags `goolm,stdjson` by default
 - Frontend source uses two-space indentation, LF line endings, and UTF-8 (`web/frontend/.editorconfig`).
 - Integration suites are discovered under `integration/suites/`; see `integration/README.md` before adding or modifying one.
 - The legacy `pico` channel is only for backward client compatibility; do not use it for new channel functionality.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked locally as Markdown under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Uses the default canonical triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Uses a single-context layout rooted at `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
